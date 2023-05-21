@@ -22,7 +22,22 @@ class ExampleTest extends TestCase
     {
         $res = ProjectService::getWorkflowInstance()->createProject(['project_name' => '一个牛逼的项目名称']);
 
-        var_dump($res);
+        dump($res);
+
+        $this->assertTrue(true);
+
+    }
+
+
+    public function testCreateProject2()
+    {
+        $res = ProjectService::getWorkflowInstance()->createProject(
+            data: [
+                'project_name' => '一个牛逼的项目名称'
+            ]
+        );
+
+        dump($res);
 
         $this->assertTrue(true);
 

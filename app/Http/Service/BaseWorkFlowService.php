@@ -23,19 +23,56 @@ class BaseWorkFlowService
 
         $taskName = $this->className . '@' . $name;
 
-        $trigger = $this->TriggerTask($taskName);
+        $workflow = $this->getWorkflow($taskName);
 
-        if (!empty($trigger)) {
-            return '需要系统审批';
+
+        //是触发器
+        if (!empty($workflow)) {
+
+            //有触发条件判断
+            if (!empty($workflow['workflow_start_condition'])) {
+                //获取判断class
+                $workFlowEngineClass = $this->getWorkFlowEngineClass();
+
+                $startCondition = app($workFlowEngineClass)->workflowStartCondition($workflow);
+
+                //满足触发条件
+                if ($startCondition === true) {
+                    return [
+                        'msg' => '需要系统审批',
+                        'workflow' => $workflow->toArray(),
+                    ];
+                }
+            } else {
+                //没有触发条件
+                return [
+                    'msg' => '需要系统审批',
+                    'workflow' => $workflow->toArray(),
+                ];
+            }
+
         }
 
+
+        //实际执行
         return app($this->className)->$name(...$arguments);
 
     }
 
-    public function TriggerTask($taskName): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder|null
+    private function getWorkflow($taskName): \Illuminate\Database\Eloquent\Model|\Illuminate\Database\Eloquent\Builder|null
     {
         return WorkflowMainSetting::query()->where('trigger_task', $taskName)
             ->first();
     }
+
+
+    private function getWorkFlowEngineClass(): string
+    {
+        $workFlowEngineClass = config('workflow.location', 'app/Workflow/') . class_basename($this->className) . 'EngineWorkflow';
+        if (class_exists($workFlowEngineClass)) {
+            return $workFlowEngineClass;
+        }
+        return config('workflow.location', 'app/Workflow/') . 'BaseEngineWorkflow';
+    }
+
 }

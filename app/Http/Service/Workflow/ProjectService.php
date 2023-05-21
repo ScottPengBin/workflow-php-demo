@@ -13,4 +13,12 @@ class ProjectService extends BaseWorkFlowService
         var_dump($data);
         return '创建项目成功';
     }
+
+    public function createProjectApproval($data)
+    {
+        $workflow = $data['workflow'];
+
+
+        $reqData = $data['data'];
+    }
 }
