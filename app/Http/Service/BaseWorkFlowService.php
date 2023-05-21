@@ -4,6 +4,7 @@ namespace App\Http\Service;
 
 use App\Http\Service\Workflow\ProjectService;
 use App\Models\WorkflowMainSetting;
+use App\Models\WorkflowNodeSetting;
 
 class BaseWorkFlowService
 {
@@ -21,10 +22,39 @@ class BaseWorkFlowService
     public function __call(string $name, array $arguments)
     {
 
+        //说明提交审核
+        if (!empty($arguments[0]['workflow'])) {
+            $nextNodes = WorkflowNodeSetting::query()->where('workflow_id', $arguments[0]['workflow']['workflow_id'])
+                ->where('node_task', $arguments[0]['workflow']['node_task'])
+                ->get();
+            //没有子节点
+            if ($nextNodes->isEmpty()) {
+                //实际执行
+                return app($this->className)->$name(...$arguments);
+            }
+            $workFlowEngineClass = $this->getWorkFlowEngineClass();
+
+            $nextNode = app($workFlowEngineClass)->getNextNode($nextNodes);
+
+            if (empty($nextNode)) {
+                return app($this->className)->$name(...$arguments);
+            }
+
+            $nodeTask = explode('@', $nextNode->node_task);
+
+            $nodeClass = $nodeTask[0];
+            $nodeMethod = $nodeTask[1];
+
+            //node_id
+            $arguments[0]['workflow']['node_id'] = $nextNode->id;
+
+            return app($nodeClass)->$nodeMethod(...$arguments);
+
+        }
+
+
         $taskName = $this->className . '@' . $name;
-
         $workflow = $this->getWorkflow($taskName);
-
 
         //是触发器
         if (!empty($workflow)) {
@@ -53,6 +83,8 @@ class BaseWorkFlowService
 
         }
 
+        //是node节点
+
 
         //实际执行
         return app($this->className)->$name(...$arguments);
@@ -68,11 +100,11 @@ class BaseWorkFlowService
 
     private function getWorkFlowEngineClass(): string
     {
-        $workFlowEngineClass = config('workflow.location', 'app/Workflow/') . class_basename($this->className) . 'EngineWorkflow';
+        $workFlowEngineClass = config('workflow.location', 'App\\Workflow\\') . class_basename($this->className) . 'EngineWorkflow';
         if (class_exists($workFlowEngineClass)) {
             return $workFlowEngineClass;
         }
-        return config('workflow.location', 'app/Workflow/') . 'BaseEngineWorkflow';
+        return config('workflow.location', 'App\\Workflow\\') . 'BaseEngineWorkflow';
     }
 
 }

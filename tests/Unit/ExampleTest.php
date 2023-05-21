@@ -32,8 +32,12 @@ class ExampleTest extends TestCase
     public function testCreateProject2()
     {
         $res = ProjectService::getWorkflowInstance()->createProject(
-            data: [
-                'project_name' => '一个牛逼的项目名称'
+            [
+                'data' => ['project_name' => '一个牛逼的项目名称'],
+                'workflow' => [
+                    'workflow_id' => 1,
+                    'node_task' => 'App\Http\Service\Workflow\ProjectService@createProject',
+                ]
             ]
         );
 

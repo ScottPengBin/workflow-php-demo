@@ -3,9 +3,13 @@
 namespace App\Http\Service\Workflow;
 
 use App\Http\Service\BaseWorkFlowService;
+use App\Models\WorkflowNodeSetting;
 
 class ProjectService extends BaseWorkFlowService
 {
+    /**
+     * 创建项目
+     */
     public function createProject($data)
     {
 
@@ -14,11 +18,4 @@ class ProjectService extends BaseWorkFlowService
         return '创建项目成功';
     }
 
-    public function createProjectApproval($data)
-    {
-        $workflow = $data['workflow'];
-
-
-        $reqData = $data['data'];
-    }
 }
